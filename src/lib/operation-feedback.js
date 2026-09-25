@@ -53,6 +53,9 @@ export function successForResponse(response) {
   }
 
   const entities = [
+    [/^\/Orders\/\d+\/Details\/\d+$/, 'Detalle de orden', false],
+    [/^\/Orders(?:\/\d+)?$/, 'Orden', true],
+    [/^\/Shippers(?:\/\d+)?$/, 'Transportadora', true],
     [/^\/Products(?:\/[^/]+)?$/, 'Producto', false],
     [/^\/(?:Category|Categories)(?:\/[^/]+)?$/, 'Categoría', true],
     [/^\/Suppliers(?:\/[^/]+)?$/, 'Proveedor', false],

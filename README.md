@@ -29,6 +29,8 @@ El servidor de producción debe servir `dist`, resolver rutas SPA con `index.htm
 | Productos | Búsqueda, filtros, paginación, orden y detalle con imagen de categoría | Crear, editar y eliminar |
 | Categorías | Consultar detalles e imagen | Crear, editar, reemplazar/quitar imagen y eliminar |
 | Proveedores | Búsqueda por nombre, ciudad y país; detalle | CRUD e importación JSON de 1–1.000 registros |
+| Transportadoras | Búsqueda por empresa/teléfono, paginación, detalle, creación, edición y eliminación | Las mismas funciones |
+| Órdenes | Búsqueda, filtros, paginación, detalle, creación, edición, eliminación de órdenes y líneas | Las mismas funciones |
 | Carga masiva | Sin acceso de escritura | Generar entre 1 y 100.000 productos con confirmación |
 | Usuarios (Employee) | Sin sección ni acceso por URL | Crear/editar empleados User, activar/desactivar y restablecer contraseña |
 | Roles | Sin sección ni acceso por URL | CRUD de roles personalizados; Admin y User protegidos |
@@ -47,6 +49,7 @@ La gestión de empleados envía `roleId=2` en consultas y creación/edición, co
 - Generación: `POST /Product`, `{ count, categoryIds, supplierId, namePrefix, minPrice, maxPrice }`.
 - Categorías: `POST /Category`, `GET /Categories`, `GET/PUT/DELETE /Categories/{id}`.
 - Proveedores: `GET/POST /Suppliers`, `GET/PUT/DELETE /Suppliers/{id}`, `POST /Suppliers/Bulk`.
+- Transportadoras: `GET/POST /Shippers`, `GET/PUT/DELETE /Shippers/{id}`. Escrituras con `{ companyName, phone }`: empresa obligatoria de hasta 200 caracteres, teléfono opcional de hasta 30. ID entero generado por el servidor. Todos los roles autenticados tienen acceso. La eliminación es lógica y devuelve 409 si existen pedidos activos; se muestra el mensaje del backend. No hay importación masiva para esta entidad.
 - Clientes: `GET/POST /Customers`, `GET/PUT/DELETE /Customers/{id}`, `POST /Customers/Bulk`. El `id` es un entero autoincremental generado por el backend; creación, edición e importación envían solo datos de contacto, sin `id` ni `customerId`. Los JSON con identificadores se rechazan en el formulario de importación con una indicación para retirarlos.
 - Perfil propio: `GET/PUT /Profile`. PUT recibe `firstName`, `lastName`, `email`, `birthDate`, `address`, `city`, `region`, `postalCode`, `country` y `homePhone`. El usuario se obtiene del JWT; no se envían `id` ni `roleId`. Todos los roles autenticados pueden gestionar su cuenta.
 - Contraseña propia: `PUT /Profile/Password`, `{ currentPassword, newPassword }`, respuesta 204. Nueva contraseña de 12–128 caracteres; el frontend también pide confirmación, sin enviarla al servidor.
@@ -59,7 +62,20 @@ La generación exige confirmación y no se reintenta automáticamente. Si se pie
 
 ## Alcance adicional
 
-Pedidos, detalles y transportadoras no tienen controladores expuestos en la versión revisada. No se simulan operaciones. Customers, perfil propio y recuperación sin sesión ya están integrados.
+Customers, transportadoras, órdenes con detalles, perfil propio y recuperación sin sesión ya están integrados. La sección `/transportadoras` se implementa en `src/portal/Shippers.jsx` y reutiliza los controles, diálogos y paginador compartidos; la tabla permanece visible mientras se actualiza y Buscar refresca incluso con los mismos criterios.
+
+### Órdenes
+
+`src/portal/Orders.jsx` ofrece `/ordenes`, `/ordenes/nueva`, `/ordenes/:id` y `/ordenes/:id/editar` para todos los roles autenticados, conforme al controlador actual. Consume `GET/POST /Orders`, `GET/PUT/DELETE /Orders/{id}` y `DELETE /Orders/{orderId}/Details/{detailId}`.
+
+- Búsqueda por número de orden, destinatario o ciudad; filtros por cliente, ID de empleado, transportadora y rango de fechas. Consultas y selectores paginados en servidor.
+- El formulario envía cliente, transportadora opcional, fechas UTC, flete, datos de envío y entre 1 y 1.000 detalles. Las fechas se muestran e introducen en hora local y se convierten a UTC al enviar.
+- El empleado lo obtiene el backend de la sesión. No se envían empleado, precios unitarios ni totales: el servidor fija el precio al agregar cada producto y devuelve los importes calculados. Los detalles existentes conservan su precio histórico.
+- Cada detalle envía producto, cantidad entera positiva y descuento entre 0 y 1 con hasta cuatro decimales. Se impiden productos duplicados. Al editar se conserva `orderDetailId`; el producto de una línea guardada no se puede cambiar.
+- Omitir un detalle del PUT no lo elimina. Por eso las líneas guardadas se eliminan con confirmación desde el detalle de la orden mediante su endpoint específico. Las líneas nuevas se pueden quitar del formulario antes de guardar. Eliminar una orden desactiva también sus detalles.
+- Se muestran IDs de cliente, empleado y productos cuando la respuesta no incluye nombres. Los productos del detalle enlazan al catálogo. Los errores del backend se muestran conservando el formulario; las operaciones exitosas usan el modal global.
+
+Esta integración se compiló sin ejecutar pruebas funcionales ni automatizadas, conforme a la indicación vigente del usuario.
 
 ## Sesión e interfaz
 
