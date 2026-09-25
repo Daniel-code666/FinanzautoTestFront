@@ -88,7 +88,7 @@ Esta integración se compiló sin ejecutar pruebas funcionales ni automatizadas,
 - Modal global de resultado tras crear, actualizar, eliminar/desactivar, reactivar o completar cargas masivas. También cubre registro, perfil y contraseñas; aparece cuando la API confirma el éxito y permanece disponible al cambiar de pantalla.
 - Navegación móvil, tablas con desplazamiento horizontal y diálogos accesibles.
 
-## Docker y CI
+## Docker
 
 El único Compose del conjunto está en el backend, `C:\Users\Administrador\source\repos\Finanzauto\docker-compose.yml`. Agrupa `front`, `api` y `db` en el proyecto `finanzauto`, con imágenes y contenedores separados. Ejecutar desde esa carpeta:
 
@@ -99,7 +99,7 @@ docker compose up --build -d
 
 Abrir http://localhost:5174. El `.env` del backend define `FRONT_CONTEXT` con la ruta de esta carpeta; `.env.example` usa `../Front` para una disposición de carpetas hermanas. No se copia ni mueve el código del frontend. Nginx consume `api:8080` por la red común `finanzauto_default`; el volumen de PostgreSQL permanece como `finanzauto_postgres_data`. Para actualizar solo el frontend: `docker compose up --build -d --no-deps front` desde el backend. Ya no se usa el proyecto independiente `finanzauto-front`.
 
-`.github/workflows/frontend.yml` instala dependencias, ejecuta pruebas, compila y construye Docker. Preparado para un repositorio cuya raíz sea esta carpeta; no se ha publicado ni ejecutado en GitHub.
+El frontend no incluye workflows de GitHub Actions. Los pushes a `main` y los pull requests no activan un pipeline definido por este proyecto. La compilación y construcción Docker se ejecutan manualmente con los comandos indicados.
 
 ## Verificación
 
